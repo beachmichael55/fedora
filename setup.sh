@@ -87,9 +87,7 @@ if [[ "$GAMING" == "yes" ]]; then
 	[[ "$EMULATOR" == "yes" ]] && EMULATOR_FLATPAK=(io.github.shiiion.primehack org.DolphinEmu.dolphin-emu)
 	[[ "$EMULATOR_E" == "yes" ]] && EMULATOR_FLATPAK+=(io.github.ryubing.Ryujinx org.azahar_emu.Azahar info.cemu.Cemu org.ppsspp.PPSSPP io.mgba.mGBA net.pcsx2.PCSX2 net.kuribo64.melonDS com.github.Rosalie241.RMG net.shadps4.shadPS4 com.snes9x.Snes9x app.xemu.xemu net.rpcs3.RPCS3 com.github.AmatCoder.mednaffe org.flycast.Flycast org.libretro.RetroArch)
 	[[ "$NATIVE" == "Native" ]] && PKGS+=(steam vkbasalt mangohud gamescope mame-tools restic goverlay)
-	[[ "$NATIVE" == "Flatpak" ]]; then
-		FLATPAK_PKGS+=(org.freedesktop.Platform.VulkanLayer.vkBasalt//25.08 org.freedesktop.Platform.VulkanLayer.MangoHud//23.08 org.freedesktop.Platform.VulkanLayer.MangoHud//25.08 org.freedesktop.Platform.VulkanLayer.gamescope//23.08 org.freedesktop.Platform.VulkanLayer.gamescope//25.08 com.github.Matoking.protontricks net.lutris.Lutris com.moonlight_stream.Moonlight dev.lizardbyte.app.Sunshine)
-	fi
+	[[ "$NATIVE" == "Flatpak" ]] && FLATPAK_PKGS+=(org.freedesktop.Platform.VulkanLayer.vkBasalt//25.08 org.freedesktop.Platform.VulkanLayer.MangoHud//23.08 org.freedesktop.Platform.VulkanLayer.MangoHud//25.08 org.freedesktop.Platform.VulkanLayer.gamescope//23.08 org.freedesktop.Platform.VulkanLayer.gamescope//25.08 com.github.Matoking.protontricks net.lutris.Lutris com.moonlight_stream.Moonlight dev.lizardbyte.app.Sunshine)
 fi
 [[ "$PROTON" == "yes" ]] && PKGS+=(proton-vpn-gtk-app proton-vpn-daemon python3-proton-vpn-network-manager)
 [[ "$VIRTM" == "yes" ]] && PKGS+=(qemu-kvm libvirt virt-install bridge-utils virt-manager libvirt-devel virt-top guestfs-tools)
@@ -164,7 +162,7 @@ if [[ "$LAPTOP_NVIDIA" == "PROPRIETARY" ]]; then
 	sudo systemctl enable nvidia-suspend nvidia-hibernate nvidia-resume nvidia-powerd
 fi
 # Speed up boot time
-sudo systemctl disable NetworkManager-wait-online.service
+sudo systemctl disable NetworkManager-wait-online
 # Add the current user to 'render' and 'video' groups to access GPUs
 echo -"Adding current user to render and video groups..."
 groups_lst="sys,network,wheel,audio,storage,video,users,render"
