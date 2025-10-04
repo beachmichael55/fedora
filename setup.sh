@@ -54,13 +54,11 @@ if [[ "$GAMING" == "yes" ]]; then
 	prompt_choice MINE "Install Minecraft" "yes" "no" "SKIP"
 fi
 prompt_choice VIRTM "Install QEMU VM Manager" "yes" "no" "SKIP"
+prompt_choice WALL "Do you want to install the app based firewall, OpenSnitch" "yes" "no" "SKIP"
 prompt_choice DOCKER "Install Docker?" "yes" "no" "SKIP"
 prompt_choice PROTON "Do you use ProtonVPN" "yes" "no" "SKIP"
 if [[ "$GPU" == "AMD" ]]; then
 	prompt_choice ROCM "Install ROCM for GPU AI" "yes" "no" "SKIP"
-fi
-if ! command -v winecfg &>/dev/null; then
-	prompt_choice WINE "Wine not found. Install Wine" "yes" "no" "SKIP"
 fi
 ########## List of packages and flatpaks
 if [[ "$LAPTOP_NVIDIA" == "PROPRIETARY" ]]; then
@@ -77,20 +75,19 @@ FLATPAK_PKGS=(com.github.tchx84.Flatseal it.mijorus.gearlever io.github.ilya_zlo
 if [[ "$NATIVE" == "Native" ]]; then
 	PKGS+=(qbittorrent kate vlc calibre keepassxc audacity aegisub converseen mediainfo-gui thunderbird filezilla remmina wireshark)
 else
-	FLATPAK_PKGS+=(org.qbittorrent.qBittorrent org.kde.kate org.aegisub.Aegisub net.fasterland.converseen org.videolan.VLC com.calibre_ebook.calibre org.keepassxc.KeePassXC org.audacityteam.Audacity net.mediaarea.MediaInfoorg.filezillaproject.Filezilla org.remmina.Remmina org.wireshark.Wireshark org.mozilla.Thunderbird)
+	FLATPAK_PKGS+=(org.qbittorrent.qBittorrent org.kde.kate org.aegisub.Aegisub net.fasterland.converseen org.videolan.VLC com.calibre_ebook.calibre org.keepassxc.KeePassXC org.audacityteam.Audacity net.mediaarea.MediaInfoorg.filezillaproject.Filezilla org.remmina.Remmina org.wireshark.Wireshark org.mozilla.Thunderbird org.freedesktop.Platform.GStreamer.gstreamer-vaapi)
 fi
 if [[ "$GAMING" == "yes" ]]; then
-	PKGS+=(steam vulkan)
+	PKGS+=(vulkan steam)
 	[[ "$GPAD" == "yes" ]] && PKGS+=(xpadneo xone lpf-xone-firmware dualsensectl)
 	[[ "$EMULATOR" == "yes" ]] && EMULATOR_FLATPAK=(io.github.shiiion.primehack org.DolphinEmu.dolphin-emu)
 	[[ "$EMULATOR_E" == "yes" ]] && EMULATOR_FLATPAK+=(io.github.ryubing.Ryujinx org.azahar_emu.Azahar info.cemu.Cemu org.ppsspp.PPSSPP io.mgba.mGBA net.pcsx2.PCSX2 net.kuribo64.melonDS com.github.Rosalie241.RMG net.shadps4.shadPS4 com.snes9x.Snes9x app.xemu.xemu net.rpcs3.RPCS3 com.github.AmatCoder.mednaffe org.flycast.Flycast org.libretro.RetroArch)
-	[[ "$NATIVE" == "Native" ]] && PKGS+=(steam vkbasalt mangohud gamescope mame-tools restic lutris goverlay)
-	[[ "$NATIVE" == "Flatpak" ]] && FLATPAK_PKGS+=(org.freedesktop.Platform.VulkanLayer.vkBasalt//25.08 org.freedesktop.Platform.VulkanLayer.MangoHud//25.08 org.freedesktop.Platform.VulkanLayer.gamescope//25.08 com.github.Matoking.protontricks net.lutris.Lutris com.moonlight_stream.Moonlight dev.lizardbyte.app.Sunshine)
+	[[ "$NATIVE" == "Native" ]] && PKGS+=(vkbasalt mangohud gamescope mame-tools restic lutris goverlay)
+	[[ "$NATIVE" == "Flatpak" ]] && FLATPAK_PKGS+=(org.freedesktop.Platform.VulkanLayer.vkBasalt//25.08 org.freedesktop.Platform.VulkanLayer.MangoHud//25.08 org.freedesktop.Platform.VulkanLayer.gamescope//25.08 com.github.Matoking.protontricks net.lutris.Lutris com.moonlight_stream.Moonlight dev.lizardbyte.app.Sunshine org.freedesktop.Platform.VulkanLayer.gamescope//23.08 org.freedesktop.Platform.VulkanLayer.MangoHud//23.08)
 fi
 [[ "$PROTON" == "yes" ]] && PKGS+=(proton-vpn-gtk-app proton-vpn-daemon python3-proton-vpn-network-manager)
 [[ "$VIRTM" == "yes" ]] && PKGS+=(qemu-kvm libvirt virt-install bridge-utils virt-manager libvirt-devel virt-top guestfs-tools)
 [[ "$ROCM" == "yes" ]] && PKGS+=(rocm-hip rocm-clinfo rocm-opencl)
-[[ "$WINE" == "yes" ]] && PKGS+=(winehq-staging)
 [[ "$MINE" == "yes" ]] && FLATPAK_PKGS+=(org.prismlauncher.PrismLauncher)
 [[ "$OSRS" == "yes" ]] && FLATPAK_PKGS+=(com.adamcake.Bolt net.runelite.RuneLite)
 [[ "$DOCKER" == "yes" ]] && PKGS+=(docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin)
@@ -108,10 +105,6 @@ if [[ "$PROTON" == "yes" ]]; then
 	wget "https://repo.protonvpn.com/fedora-$(cat /etc/fedora-release | cut -d' ' -f 3)-stable/protonvpn-stable-release/protonvpn-stable-release-1.0.3-1.noarch.rpm"
 	sudo dnf install ./protonvpn-stable-release-1.0.3-1.noarch.rpm
 fi
-# Adds the Wine-HQ repository
-if [[ "$WINE" == "yes" ]]; then
-	sudo dnf config-manager addrepo --from-repofile=https://dl.winehq.org/wine-builds/fedora/42/winehq.repo
-fi
 if [[ "$GPAD" == "yes" ]]; then
 	sudo dnf copr enable atim/xpadneo
 	sudo dnf copr enable sentry/xone
@@ -119,7 +112,7 @@ if [[ "$GPAD" == "yes" ]]; then
 fi
 # Adds Docker repository
 if [[ "$DOCKER" == "yes" ]]; then
-	sudo dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
+	sudo dnf-3 config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
 fi
 ## Update repos before installings packages
 sudo dnf update -y
@@ -128,6 +121,36 @@ sudo flatpak update -y
 sudo dnf remove -y kmahjongg kmines kpat okular neochat dragon
 # Install via dnf
 sudo dnf -y install "${PKGS}"
+
+# Download and set up opensnitch
+if [[ "$WALL" == "yes" ]]; then
+	echo -"Downloading and Installing OpenSnitch..."
+	mkdir -p "${HOME}/opensnitch"
+	OPENSNITCH_URL=$(curl -s https://api.github.com/repos/evilsocket/opensnitch/releases/latest | grep "browser_download_url" | grep "x86_64.rpm" | cut -d '"' -f 4)
+	if [[ -z "$OPENSNITCH_URL" ]]; then
+	  echo "Could not find a download URL for OpenSnitch"
+	  exit 1
+	fi
+	if sudo curl -fSL "$OPENSNITCH_URL" -o "${HOME}"; then
+	  echo "OpenSnitch downloaded installed"
+	else
+	  echo "Failed to download OpenSnitch"
+	  exit 1
+	fi
+	OPENSNITCH_UI=$(curl -s https://api.github.com/repos/evilsocket/opensnitch/releases/latest | grep "browser_download_url" | grep "noarch.rpm" | cut -d '"' -f 4)
+	if [[ -z "$OPENSNITCH_UI" ]]; then
+	  echo "Could not find a download URL for OpenSnitch UI"
+	  exit 1
+	fi
+	if sudo curl -fSL "$OPENSNITCH_UI" -o "${HOME}"; then
+	  echo "OpenSnitch UI downloaded installed"
+	else
+	  echo "Failed to download OpenSnitch UI"
+	  exit 1
+	fi
+	sudo dnf -y install ./opensnitch/*.rpm
+	rm -rdv ./opensnitch
+fi
 # Install via Flatpak
 if ! command -v flatpak &>/dev/null; then
   echo "Flatpak not found, installing..."
@@ -139,7 +162,7 @@ flatpak install -y --noninteractive "${ALL_FLATPAKS[@]}"
 # Enable systemd services
 echo -"Enabling and Starting services..."
 if [[ "$VIRTM" == "yes" ]]; then
-	sudo usermod -aG kvm $(whoami)
+	touch "/etc/libvirt/libvirtd.conf"
 	sudo sed -i 's/#unix_sock_group = "libvirt"/unix_sock_group = "libvirt"/' /etc/libvirt/libvirtd.conf
 	sudo sed -i 's/#unix_sock_rw_perms = "0770"/unix_sock_rw_perms = "0770"/' /etc/libvirt/libvirtd.conf
 	sudo firewall-cmd --permanent --add-service=libvirt
@@ -157,7 +180,7 @@ fi
 sudo systemctl disable NetworkManager-wait-online
 # Add the current user to 'render' and 'video' groups to access GPUs
 echo -"Adding current user to render and video groups..."
-groups_lst="sys,wheel,audio,video,users,render"
+groups_lst="sys,wheel,audio,video,users,render,gamemmode,pkg-build,kvm,libvirt,qemu"
 sudo usermod -aG ${groups_lst} $(whoami)
 ####### Misc stuf ###########
 # Upgrade pip and install Python tools like setuptools-rust, virtualenv
@@ -165,22 +188,23 @@ python -m ensurepip --upgrade
 python -m pip install --upgrade pip setuptools wheel virtualenv setuptools-rust
 # Download and set up bootnext tool
 echo -"Downloading and Installing BOOTNEXT..."
-if sudo curl -fSL "https://github.com/TensorWorks/bootnext/releases/download/v0.0.2/bootnext-linux-amd64" -o /usr/local/bin/bootnext; then
-  sudo chmod +x /usr/local/bin/bootnext
+BOOTNEXT_URL=$(curl -s https://api.github.com/repos/TensorWorks/bootnext/releases/latest | grep "browser_download_url" | grep "linux-amd64" | cut -d '"' -f 4)
+DEST="/usr/local/bin/bootnext"
+if [[ -z "$BOOTNEXT_URL" ]]; then
+  echo "Could not find a download URL for BOOTNEXT"
+  exit 1
+fi
+if sudo curl -fSL "$BOOTNEXT_URL" -o "$DEST"; then
+  sudo chmod +x "$DEST"
+  echo "BOOTNEXT successfully installed to $DEST"
 else
-  echo -e "Failed to download BOOTNEXT"
+  echo "Failed to download BOOTNEXT"
+  exit 1
 fi
 ## Post Gameing settings
 # For Gamemode
-if [[ "$GAMING" == "yes" ]]; then
-	# Set Steam Firewall
-	sudo firewall-cmd --permanent --add-port=27031-27036/udp &> /dev/null
-	sudo firewall-cmd --permanent --add-port=27036/tcp &> /dev/null
-	sudo firewall-cmd --permanent --add-port=27037/tcp &> /dev/null
-fi
 # Builds, installs XboxOne app
 if [[ "$GPAD" == "yes" ]]; then
-	user -a -G pkg-build 
 	sudo lpf approve xone-firmware
 	sudo lpf build xone-firmware
 	sudo lpf install xone-firmware
@@ -230,11 +254,13 @@ alias plasmareset='killall plasmashell; kstart plasmashell'
 # Grep with color
 alias grep='grep --colour=auto'
 
-# DNF
+# DNF / Flatpak
 alias add='sudo dnf install'
 alias sp='dnf search'
 alias rem='sudo dnf remove'
 alias dnfe='sudo nano /etc/dnf/dnf.conf'
+alias fadd='flatpak install --noninteractive'
+alias frem='flatpak uninstall'
 
 # Editors and config
 alias nb='nano ~/.bashrc'
