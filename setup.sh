@@ -11,10 +11,6 @@ sudo -v
 ( while true; do sudo -v; sleep 50; done ) &
 SUDO_PID=$!
 trap '[[ -n "$SUDO_PID" ]] && kill "$SUDO_PID"' EXIT
-
-PKGS=""
-FLATPAK_PKGS=""
-GAMING_FLATPAKS=""
 # Reusable prompt function for 'USER INPUT'
 function prompt_choice() {
     local var_name=$1
@@ -46,24 +42,23 @@ if [[ "$LAPTOP" == "yes" ]]; then
 	fi
 fi
 prompt_choice GPU "What Graphics card do you have?" "AMD" "NVIDIA" "INTEL" "SKIP"
-prompt_choice SOFTWARE "Install general software." "yes" "no" "SKIP"
 prompt_choice NATIVE "Install Native or Flatpak software when possible." "Native" "Flatpak" "SKIP"
 prompt_choice GAMING "Install Gaming stuff?" "yes" "no"
 if [[ "$GAMING" == "yes" ]]; then
-	prompt_choice EMULATOR "Install game emulators? Will be as flatpak" "yes" "no" "SKIP"
+	prompt_choice EMULATOR "Install game emulators? Will be as flatpak" "yes" "no"
 	if [[ "$EMULATOR" == "yes" ]]; then
-		prompt_choice EMULATOR_E "Install more then just the emulators that only have Flatpaks available?(just like Dolphin)" "yes" "no" "SKIP"
+		prompt_choice EMULATOR_E "Install more then just the emulators that only have Flatpaks available?(just like Dolphin)" "yes" "no"
 	fi
-	prompt_choice GPAD "Install extra gamepad suport?(like for XboxOne and PlayStation)" "yes" "no" "SKIP"
-	prompt_choice OSRS "Install OSRS" "yes" "no" "SKIP"
-	prompt_choice MINE "Install Minecraft" "yes" "no" "SKIP"
+	prompt_choice GPAD "Install extra gamepad suport?(like for XboxOne and PlayStation)" "yes" "no"
+	prompt_choice OSRS "Install OSRS" "yes" "no"
+	prompt_choice MINE "Install Minecraft" "yes" "no"
 fi
-prompt_choice VIRTM "Install QEMU VM Manager" "yes" "no" "SKIP"
-prompt_choice WALL "Do you want to install the app based firewall, OpenSnitch" "yes" "no" "SKIP"
-prompt_choice DOCKER "Install Docker?" "yes" "no" "SKIP"
-prompt_choice PROTON "Do you use ProtonVPN" "yes" "no" "SKIP"
+prompt_choice VIRTM "Install QEMU VM Manager" "yes" "no"
+prompt_choice WALL "Do you want to install the app based firewall, OpenSnitch" "yes" "no"
+prompt_choice DOCKER "Install Docker?" "yes" "no"
+prompt_choice PROTON "Do you use ProtonVPN?(NOTE: THis is the last question before script runs." "yes" "no"
 if [[ "$GPU" == "AMD" ]]; then
-	prompt_choice ROCM "Install ROCM for GPU AI" "yes" "no" "SKIP"
+	prompt_choice ROCM "Install ROCM for GPU AI" "yes" "no"
 fi
 ########## List of packages and flatpaks
 if [[ "$LAPTOP_NVIDIA" == "PROPRIETARY" ]]; then
@@ -73,10 +68,8 @@ fi
 [[ "$GPU" == "INTEL" ]] && PKGS+=(intel-gpu-tools)
 [[ "$GPU" == "AMD" ]] && PKGS+=(radeontop)
 # General Software
-if [[ "$SOFTWARE" == "yes" ]]; then
-	PKGS+=(git duperemove pv duf sg3_utils efitools python3-pip unrar fastfetch dkms java-latest-openjdk yt-dlp btrfs-assistant dnf-plugins-core cmake wmctrl xdotool ulauncher rclone-browser k3b par2cmdline meld iperf3)
-	FLATPAK_PKGS=(com.github.tchx84.Flatseal it.mijorus.gearlever io.github.ilya_zlobintsev.LACT io.github.peazip.PeaZip fr.handbrake.ghb io.missioncenter.MissionCenter io.github.dvlv.boxbuddyrs io.github.cboxdoerfer.FSearch org.bionus.Grabber org.freefilesync.FreeFileSync io.github.giantpinkrobots.flatsweep net.mkiol.SpeechNote io.gitlab.adhami3310.Converter dev.vencord.Vesktop com.discordapp.Discord de.schmidhuberj.tubefeeder com.notepadqq.Notepadqq com.github.nrittsti.NTag com.github.Bleuzen.FFaudioConverter com.github.zocker_160.SyncThingy) 
-fi
+PKGS=(git duperemove pv duf sg3_utils efitools python3-pip unrar fastfetch dkms java-latest-openjdk yt-dlp btrfs-assistant dnf-plugins-core cmake wmctrl xdotool ulauncher rclone-browser k3b par2cmdline meld iperf3)
+FLATPAK_PKGS=(com.github.tchx84.Flatseal it.mijorus.gearlever io.github.ilya_zlobintsev.LACT io.github.peazip.PeaZip fr.handbrake.ghb io.missioncenter.MissionCenter io.github.dvlv.boxbuddyrs io.github.cboxdoerfer.FSearch org.bionus.Grabber org.freefilesync.FreeFileSync io.github.giantpinkrobots.flatsweep net.mkiol.SpeechNote io.gitlab.adhami3310.Converter dev.vencord.Vesktop com.discordapp.Discord de.schmidhuberj.tubefeeder com.notepadqq.Notepadqq com.github.nrittsti.NTag com.github.Bleuzen.FFaudioConverter com.github.zocker_160.SyncThingy) 
 if [[ "$NATIVE" == "Native" ]]; then
 	PKGS+=(qbittorrent kate vlc calibre keepassxc audacity aegisub converseen mediainfo-gui thunderbird filezilla remmina wireshark)
 else
@@ -109,7 +102,7 @@ sudo flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flat
 # Enables Proton repository
 if [[ "$PROTON" == "yes" ]]; then
 	wget "https://repo.protonvpn.com/fedora-$(cat /etc/fedora-release | cut -d' ' -f 3)-stable/protonvpn-stable-release/protonvpn-stable-release-1.0.3-1.noarch.rpm"
-	sudo dnf install ./protonvpn-stable-release-1.0.3-1.noarch.rpm
+	sudo dnf -y install ./protonvpn-stable-release-1.0.3-1.noarch.rpm
 fi
 if [[ "$GPAD" == "yes" ]]; then
 	sudo dnf copr enable atim/xpadneo
@@ -126,17 +119,18 @@ sudo flatpak update -y
 # Remove Installed Apps
 sudo dnf remove -y kmahjongg kmines kpat okular neochat dragon
 # Install via dnf
-sudo dnf -y install "${PKGS}"
+sudo dnf -y install "${PKGS[@]}"
 # Download and set up opensnitch
 if [[ "$WALL" == "yes" ]]; then
 	echo -"Downloading and Installing OpenSnitch..."
 	mkdir -p "${HOME}/opensnitch"
+	HDIR="${HOME}/opensnitch"
 	OPENSNITCH_URL=$(curl -s https://api.github.com/repos/evilsocket/opensnitch/releases/latest | grep "browser_download_url" | grep "x86_64.rpm" | cut -d '"' -f 4)
 	if [[ -z "$OPENSNITCH_URL" ]]; then
 	  echo "Could not find a download URL for OpenSnitch"
 	  exit 1
 	fi
-	if sudo curl -fSL "$OPENSNITCH_URL" -o "${HOME}/opensnitch"; then
+	if sudo curl -fSL "$OPENSNITCH_URL" -o "$HDIR"; then
 	  echo "OpenSnitch downloaded installed"
 	else
 	  echo "Failed to download OpenSnitch"
@@ -147,7 +141,7 @@ if [[ "$WALL" == "yes" ]]; then
 	  echo "Could not find a download URL for OpenSnitch UI"
 	  exit 1
 	fi
-	if sudo curl -fSL "$OPENSNITCH_UI" -o "${HOME}/opensnitch"; then
+	if sudo curl -fSL "$OPENSNITCH_UI" -o "$HDIR"; then
 	  echo "OpenSnitch UI downloaded installed"
 	else
 	  echo "Failed to download OpenSnitch UI"
