@@ -32,37 +32,35 @@ function prompt_choice() {
     done
 }
 # == USER INPUT ====
-prompt_choice LAPTOP "Is this on a Laptop/Notebook?" "yes" "no"
+prompt_choice LAPTOP "Is this on a Laptop/Notebook?" "yes" "no" "SKIP"
 if [[ "$LAPTOP" == "yes" ]]; then
-	prompt_choice LAPTOP_TYPE "Is this a laptop (with Intel/NVIDIA hybrid graphics?" "yes" "no"
+	prompt_choice LAPTOP_TYPE "Is this a laptop (with Intel/NVIDIA hybrid graphics?" "yes" "no" "SKIP"
 	if [[ "$LAPTOP_TYPE" == "yes" ]]; then
 		echo "For Turing (GeForce RTX 2080 and earlier): Choose Proprietary"
 		echo "For Ampere and later (RTX 3050+): Fedora already have drivers. Skip"
 		prompt_choice LAPTOP_NVIDIA "What type of drivers do you want to use?" "PROPRIETARY" "SKIP"
 	fi
 fi
-prompt_choice GPU "What Graphics card do you have?" "AMD" "NVIDIA" "INTEL"
-prompt_choice NATIVE "Install Native or Flatpak software when possible." "Native" "Flatpak"
-prompt_choice GAMING "Install Gaming stuff?" "yes" "no"
+prompt_choice GPU "What Graphics card do you have?" "AMD" "NVIDIA" "INTEL" "SKIP"
+prompt_choice NATIVE "Install Native or Flatpak software when possible." "Native" "Flatpak" "SKIP"
+prompt_choice GAMING "Install Gaming stuff?" "yes" "no" "SKIP"
 if [[ "$GAMING" == "yes" ]]; then
-	prompt_choice EMULATOR "Install game emulators? Will be as flatpak" "yes" "no"
+	prompt_choice EMULATOR "Install game emulators? Will be as flatpak" "yes" "no" "SKIP"
 	if [[ "$EMULATOR" == "yes" ]]; then
-		prompt_choice EMULATOR_E "Install more then just the emulators that only have Flatpaks available?(just like Dolphin)" "yes" "no"
+		prompt_choice EMULATOR_E "Install more then just the emulators that only have Flatpaks available?(just like Dolphin)" "yes" "no" "SKIP"
 	fi
-	prompt_choice GPAD "Install extra gamepad suport?(like for XboxOne and PlayStation)" "yes" "no"
-	prompt_choice OSRS "Install OSRS" "yes" "no"
-	prompt_choice MINE "Install Minecraft" "yes" "no"
+	prompt_choice GPAD "Install extra gamepad suport?(like for XboxOne and PlayStation)" "yes" "no" "SKIP"
+	prompt_choice OSRS "Install OSRS" "yes" "no" "SKIP"
+	prompt_choice MINE "Install Minecraft" "yes" "no" "SKIP"
 fi
-prompt_choice VIRTM "Install QEMU VM Manager" "yes" "no"
-
-prompt_choice DOCKER "Install Docker?" "yes" "no"
-
-prompt_choice PROTON "Do you use ProtonVPN" "yes" "no"
+prompt_choice VIRTM "Install QEMU VM Manager" "yes" "no" "SKIP"
+prompt_choice DOCKER "Install Docker?" "yes" "no" "SKIP"
+prompt_choice PROTON "Do you use ProtonVPN" "yes" "no" "SKIP"
 if [[ "$GPU" == "AMD" ]]; then
-	prompt_choice ROCM "Install ROCM for GPU AI" "yes" "no"
+	prompt_choice ROCM "Install ROCM for GPU AI" "yes" "no" "SKIP"
 fi
 if ! command -v winecfg &>/dev/null; then
-	prompt_choice WINE "Wine not found. Install Wine" "yes" "no"
+	prompt_choice WINE "Wine not found. Install Wine" "yes" "no" "SKIP"
 fi
 ########## List of packages and flatpaks
 if [[ "$LAPTOP_NVIDIA" == "PROPRIETARY" ]]; then
@@ -86,8 +84,8 @@ if [[ "$GAMING" == "yes" ]]; then
 	[[ "$GPAD" == "yes" ]] && PKGS+=(xpadneo xone lpf-xone-firmware dualsensectl)
 	[[ "$EMULATOR" == "yes" ]] && EMULATOR_FLATPAK=(io.github.shiiion.primehack org.DolphinEmu.dolphin-emu)
 	[[ "$EMULATOR_E" == "yes" ]] && EMULATOR_FLATPAK+=(io.github.ryubing.Ryujinx org.azahar_emu.Azahar info.cemu.Cemu org.ppsspp.PPSSPP io.mgba.mGBA net.pcsx2.PCSX2 net.kuribo64.melonDS com.github.Rosalie241.RMG net.shadps4.shadPS4 com.snes9x.Snes9x app.xemu.xemu net.rpcs3.RPCS3 com.github.AmatCoder.mednaffe org.flycast.Flycast org.libretro.RetroArch)
-	[[ "$NATIVE" == "Native" ]] && PKGS+=(steam vkbasalt mangohud gamescope mame-tools restic goverlay)
-	[[ "$NATIVE" == "Flatpak" ]] && FLATPAK_PKGS+=(org.freedesktop.Platform.VulkanLayer.vkBasalt//25.08 org.freedesktop.Platform.VulkanLayer.MangoHud//23.08 org.freedesktop.Platform.VulkanLayer.MangoHud//25.08 org.freedesktop.Platform.VulkanLayer.gamescope//23.08 org.freedesktop.Platform.VulkanLayer.gamescope//25.08 com.github.Matoking.protontricks net.lutris.Lutris com.moonlight_stream.Moonlight dev.lizardbyte.app.Sunshine)
+	[[ "$NATIVE" == "Native" ]] && PKGS+=(steam vkbasalt mangohud gamescope mame-tools restic lutris goverlay)
+	[[ "$NATIVE" == "Flatpak" ]] && FLATPAK_PKGS+=(org.freedesktop.Platform.VulkanLayer.vkBasalt//25.08 org.freedesktop.Platform.VulkanLayer.MangoHud//25.08 org.freedesktop.Platform.VulkanLayer.gamescope//25.08 com.github.Matoking.protontricks net.lutris.Lutris com.moonlight_stream.Moonlight dev.lizardbyte.app.Sunshine)
 fi
 [[ "$PROTON" == "yes" ]] && PKGS+=(proton-vpn-gtk-app proton-vpn-daemon python3-proton-vpn-network-manager)
 [[ "$VIRTM" == "yes" ]] && PKGS+=(qemu-kvm libvirt virt-install bridge-utils virt-manager libvirt-devel virt-top guestfs-tools)
@@ -129,8 +127,7 @@ sudo flatpak update -y
 # Remove Installed Apps
 sudo dnf remove -y kmahjongg kmines kpat okular neochat dragon
 # Install via dnf
-sudo dnf -y install ${PKGS}
-sudo dnf clean all
+sudo dnf -y install "${PKGS}"
 # Install via Flatpak
 if ! command -v flatpak &>/dev/null; then
   echo "Flatpak not found, installing..."
@@ -142,15 +139,10 @@ flatpak install -y --noninteractive "${ALL_FLATPAKS[@]}"
 # Enable systemd services
 echo -"Enabling and Starting services..."
 if [[ "$VIRTM" == "yes" ]]; then
-	sudo systemctl enable libvirtd
-	groups_lst="libvirt,kvm"
-	sudo usermod -aG ${groups_lst} $(whoami)
+	sudo usermod -aG kvm $(whoami)
 	sudo sed -i 's/#unix_sock_group = "libvirt"/unix_sock_group = "libvirt"/' /etc/libvirt/libvirtd.conf
 	sudo sed -i 's/#unix_sock_rw_perms = "0770"/unix_sock_rw_perms = "0770"/' /etc/libvirt/libvirtd.conf
 	sudo firewall-cmd --permanent --add-service=libvirt
-	sudo firewall-cmd --permanent --add-port=5900-5999/tcp
-	sudo firewall-cmd --permanent --add-port=16509/tcp
-	sudo firewall-cmd --permanent --add-port=5666/tcp
 	sudo firewall-cmd --reload
 fi
 if [[ "$DOCKER" == "yes" ]]; then
@@ -165,7 +157,7 @@ fi
 sudo systemctl disable NetworkManager-wait-online
 # Add the current user to 'render' and 'video' groups to access GPUs
 echo -"Adding current user to render and video groups..."
-groups_lst="sys,network,wheel,audio,storage,video,users,render"
+groups_lst="sys,wheel,audio,video,users,render"
 sudo usermod -aG ${groups_lst} $(whoami)
 ####### Misc stuf ###########
 # Upgrade pip and install Python tools like setuptools-rust, virtualenv
@@ -181,47 +173,6 @@ fi
 ## Post Gameing settings
 # For Gamemode
 if [[ "$GAMING" == "yes" ]]; then
-	sudo usermod -aG gamemode $(whoami)
-	if [ ! -f /etc/gamemode.ini ]; then
-		sudo tee /etc/gamemode.ini > /dev/null <<EOF
-[general]
-reaper_freq=5
-desiredgov=performance
-igpu_desiredgov=powersave
-igpu_power_threshold=0.3
-softrealtime=off
-renice=0
-ioprio=0
-inhibit_screensaver=1
-disable_splitlock=1
-
-[filter]
-;whitelist=RiseOfTheTombRaider
-;blacklist=HalfLife3
-
-[gpu]
-;apply_gpu_optimisations=0
-;gpu_device=0
-;nv_powermizer_mode=1
-;nv_core_clock_mhz_offset=0
-;nv_mem_clock_mhz_offset=0
-;amd_performance_level=high
-
-[cpu]
-;park_cores=no
-;pin_cores=yes
-
-[supervisor]
-;supervisor_whitelist=
-;supervisor_blacklist=
-;require_supervisor=0
-
-[custom]
-;start=notify-send "GameMode started"
-;end=notify-send "GameMode ended"
-;script_timeout=10'
-EOF
-	fi
 	# Set Steam Firewall
 	sudo firewall-cmd --permanent --add-port=27031-27036/udp &> /dev/null
 	sudo firewall-cmd --permanent --add-port=27036/tcp &> /dev/null
@@ -229,6 +180,7 @@ EOF
 fi
 # Builds, installs XboxOne app
 if [[ "$GPAD" == "yes" ]]; then
+	user -a -G pkg-build 
 	sudo lpf approve xone-firmware
 	sudo lpf build xone-firmware
 	sudo lpf install xone-firmware
@@ -313,6 +265,5 @@ alias run='find . -type f -name "*.sh" -exec chmod +x {} \;'
 alias proton='protontricks --gui --no-bwrap'
 alias bottles='flatpak run --command=bottles-cli com.usebottles.bottles'
 EOF
-sudo dnf autoremove
 read -p "Completed. Press any key to close" -n1 -s
 exit
