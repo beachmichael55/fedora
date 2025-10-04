@@ -11,6 +11,10 @@ sudo -v
 ( while true; do sudo -v; sleep 50; done ) &
 SUDO_PID=$!
 trap '[[ -n "$SUDO_PID" ]] && kill "$SUDO_PID"' EXIT
+
+PKGS=""
+FLATPAK_PKGS=""
+GAMING_FLATPAKS=""
 # Reusable prompt function for 'USER INPUT'
 function prompt_choice() {
     local var_name=$1
@@ -32,7 +36,7 @@ function prompt_choice() {
     done
 }
 # == USER INPUT ====
-prompt_choice LAPTOP "Is this on a Laptop/Notebook?" "yes" "no" "SKIP"
+prompt_choice LAPTOP "Is this on a Laptop/Notebook?" "yes" "no"
 if [[ "$LAPTOP" == "yes" ]]; then
 	prompt_choice LAPTOP_TYPE "Is this a laptop (with Intel/NVIDIA hybrid graphics?" "yes" "no" "SKIP"
 	if [[ "$LAPTOP_TYPE" == "yes" ]]; then
@@ -42,8 +46,9 @@ if [[ "$LAPTOP" == "yes" ]]; then
 	fi
 fi
 prompt_choice GPU "What Graphics card do you have?" "AMD" "NVIDIA" "INTEL" "SKIP"
+prompt_choice SOFTWARE "Install general software." "yes" "no" "SKIP"
 prompt_choice NATIVE "Install Native or Flatpak software when possible." "Native" "Flatpak" "SKIP"
-prompt_choice GAMING "Install Gaming stuff?" "yes" "no" "SKIP"
+prompt_choice GAMING "Install Gaming stuff?" "yes" "no"
 if [[ "$GAMING" == "yes" ]]; then
 	prompt_choice EMULATOR "Install game emulators? Will be as flatpak" "yes" "no" "SKIP"
 	if [[ "$EMULATOR" == "yes" ]]; then
@@ -62,16 +67,16 @@ if [[ "$GPU" == "AMD" ]]; then
 fi
 ########## List of packages and flatpaks
 if [[ "$LAPTOP_NVIDIA" == "PROPRIETARY" ]]; then
-	PKGS=(libva-vdpau-driver vdpauinfo xorg-x11-drv-nvidia-cuda-libs nvidia-settings akmod-nvidia xorg-x11-drv-nvidia-power intel-gpu-tools)
+	PKGS+=(libva-vdpau-driver vdpauinfo xorg-x11-drv-nvidia-cuda-libs nvidia-settings akmod-nvidia xorg-x11-drv-nvidia-power intel-gpu-tools)
 	sudo grubby --update-kernel=ALL --args="nvidia-drm.modeset=1"
 fi
 [[ "$GPU" == "INTEL" ]] && PKGS+=(intel-gpu-tools)
 [[ "$GPU" == "AMD" ]] && PKGS+=(radeontop)
-# General Software (native)
-PKGS+=(git duperemove pv duf sg3_utils efitools python3-pip unrar fastfetch dkms java-latest-openjdk yt-dlp btrfs-assistant dnf-plugins-core cmake wmctrl xdotool ulauncher rclone-browser k3b par2cmdline meld iperf3)
-GAMING_FLATPAKS=(com.valvesoftware.Steam.Utility.steamtinkerlaunch org.freedesktop.Platform.VulkanLayer.OBSVkCapture//25.08 com.steamgriddb.SGDBoop com.steamgriddb.steam-rom-manager com.vysp3r.ProtonPlus com.usebottles.bottles io.github.antimicrox.antimicrox com.valvesoftware.SteamLink com.github.mtkennerly.ludusavi)
-# General Software (flatpak)
-FLATPAK_PKGS=(com.github.tchx84.Flatseal it.mijorus.gearlever io.github.ilya_zlobintsev.LACT io.github.peazip.PeaZip fr.handbrake.ghb io.missioncenter.MissionCenter io.github.dvlv.boxbuddyrs io.github.cboxdoerfer.FSearch org.bionus.Grabber org.freefilesync.FreeFileSync io.github.giantpinkrobots.flatsweep net.mkiol.SpeechNote io.gitlab.adhami3310.Converter dev.vencord.Vesktop com.discordapp.Discord de.schmidhuberj.tubefeeder com.notepadqq.Notepadqq com.github.nrittsti.NTag com.github.Bleuzen.FFaudioConverter com.github.zocker_160.SyncThingy) 
+# General Software
+if [[ "$SOFTWARE" == "yes" ]]; then
+	PKGS+=(git duperemove pv duf sg3_utils efitools python3-pip unrar fastfetch dkms java-latest-openjdk yt-dlp btrfs-assistant dnf-plugins-core cmake wmctrl xdotool ulauncher rclone-browser k3b par2cmdline meld iperf3)
+	FLATPAK_PKGS=(com.github.tchx84.Flatseal it.mijorus.gearlever io.github.ilya_zlobintsev.LACT io.github.peazip.PeaZip fr.handbrake.ghb io.missioncenter.MissionCenter io.github.dvlv.boxbuddyrs io.github.cboxdoerfer.FSearch org.bionus.Grabber org.freefilesync.FreeFileSync io.github.giantpinkrobots.flatsweep net.mkiol.SpeechNote io.gitlab.adhami3310.Converter dev.vencord.Vesktop com.discordapp.Discord de.schmidhuberj.tubefeeder com.notepadqq.Notepadqq com.github.nrittsti.NTag com.github.Bleuzen.FFaudioConverter com.github.zocker_160.SyncThingy) 
+fi
 if [[ "$NATIVE" == "Native" ]]; then
 	PKGS+=(qbittorrent kate vlc calibre keepassxc audacity aegisub converseen mediainfo-gui thunderbird filezilla remmina wireshark)
 else
@@ -79,6 +84,7 @@ else
 fi
 if [[ "$GAMING" == "yes" ]]; then
 	PKGS+=(vulkan steam)
+	GAMING_FLATPAKS=(com.valvesoftware.Steam.Utility.steamtinkerlaunch org.freedesktop.Platform.VulkanLayer.OBSVkCapture//25.08 com.steamgriddb.SGDBoop com.steamgriddb.steam-rom-manager com.vysp3r.ProtonPlus com.usebottles.bottles io.github.antimicrox.antimicrox com.valvesoftware.SteamLink com.github.mtkennerly.ludusavi com.heroicgameslauncher.hgl)
 	[[ "$GPAD" == "yes" ]] && PKGS+=(xpadneo xone lpf-xone-firmware dualsensectl)
 	[[ "$EMULATOR" == "yes" ]] && EMULATOR_FLATPAK=(io.github.shiiion.primehack org.DolphinEmu.dolphin-emu)
 	[[ "$EMULATOR_E" == "yes" ]] && EMULATOR_FLATPAK+=(io.github.ryubing.Ryujinx org.azahar_emu.Azahar info.cemu.Cemu org.ppsspp.PPSSPP io.mgba.mGBA net.pcsx2.PCSX2 net.kuribo64.melonDS com.github.Rosalie241.RMG net.shadps4.shadPS4 com.snes9x.Snes9x app.xemu.xemu net.rpcs3.RPCS3 com.github.AmatCoder.mednaffe org.flycast.Flycast org.libretro.RetroArch)
@@ -121,7 +127,6 @@ sudo flatpak update -y
 sudo dnf remove -y kmahjongg kmines kpat okular neochat dragon
 # Install via dnf
 sudo dnf -y install "${PKGS}"
-
 # Download and set up opensnitch
 if [[ "$WALL" == "yes" ]]; then
 	echo -"Downloading and Installing OpenSnitch..."
@@ -131,7 +136,7 @@ if [[ "$WALL" == "yes" ]]; then
 	  echo "Could not find a download URL for OpenSnitch"
 	  exit 1
 	fi
-	if sudo curl -fSL "$OPENSNITCH_URL" -o "${HOME}"; then
+	if sudo curl -fSL "$OPENSNITCH_URL" -o "${HOME}/opensnitch"; then
 	  echo "OpenSnitch downloaded installed"
 	else
 	  echo "Failed to download OpenSnitch"
@@ -142,7 +147,7 @@ if [[ "$WALL" == "yes" ]]; then
 	  echo "Could not find a download URL for OpenSnitch UI"
 	  exit 1
 	fi
-	if sudo curl -fSL "$OPENSNITCH_UI" -o "${HOME}"; then
+	if sudo curl -fSL "$OPENSNITCH_UI" -o "${HOME}/opensnitch"; then
 	  echo "OpenSnitch UI downloaded installed"
 	else
 	  echo "Failed to download OpenSnitch UI"
