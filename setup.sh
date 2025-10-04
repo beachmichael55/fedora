@@ -103,6 +103,7 @@ sudo flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flat
 if [[ "$PROTON" == "yes" ]]; then
 	wget "https://repo.protonvpn.com/fedora-$(cat /etc/fedora-release | cut -d' ' -f 3)-stable/protonvpn-stable-release/protonvpn-stable-release-1.0.3-1.noarch.rpm"
 	sudo dnf -y install ./protonvpn-stable-release-1.0.3-1.noarch.rpm
+	rm -f ./protonvpn-stable-release-1.0.3-1.noarch.rpm
 fi
 if [[ "$GPAD" == "yes" ]]; then
 	sudo dnf copr enable atim/xpadneo
@@ -124,13 +125,12 @@ sudo dnf -y install "${PKGS[@]}"
 if [[ "$WALL" == "yes" ]]; then
 	echo -"Downloading and Installing OpenSnitch..."
 	mkdir -p "${HOME}/opensnitch"
-	HDIR="${HOME}/opensnitch"
 	OPENSNITCH_URL=$(curl -s https://api.github.com/repos/evilsocket/opensnitch/releases/latest | grep "browser_download_url" | grep "x86_64.rpm" | cut -d '"' -f 4)
 	if [[ -z "$OPENSNITCH_URL" ]]; then
 	  echo "Could not find a download URL for OpenSnitch"
 	  exit 1
 	fi
-	if sudo curl -fSL "$OPENSNITCH_URL" -o "$HDIR"; then
+	if curl -fSL "$OPENSNITCH_URL" -o "${HOME}/opensnitch/opensnitch.rpm"; then
 	  echo "OpenSnitch downloaded installed"
 	else
 	  echo "Failed to download OpenSnitch"
@@ -141,7 +141,7 @@ if [[ "$WALL" == "yes" ]]; then
 	  echo "Could not find a download URL for OpenSnitch UI"
 	  exit 1
 	fi
-	if sudo curl -fSL "$OPENSNITCH_UI" -o "$HDIR"; then
+	if curl -fSL "$OPENSNITCH_UI" -o "${HOME}/opensnitch/opensnitchui.rpm"; then
 	  echo "OpenSnitch UI downloaded installed"
 	else
 	  echo "Failed to download OpenSnitch UI"
@@ -179,7 +179,7 @@ fi
 sudo systemctl disable NetworkManager-wait-online
 # Add the current user to 'render' and 'video' groups to access GPUs
 echo -"Adding current user to render and video groups..."
-groups_lst="sys,wheel,audio,video,users,render,gamemmode,pkg-build,kvm,libvirt,qemu"
+groups_lst="sys,wheel,audio,video,users,render,gamemode,pkg-build,kvm,libvirt,qemu"
 sudo usermod -aG ${groups_lst} $(whoami)
 ####### Misc stuf ###########
 # Upgrade pip and install Python tools like setuptools-rust, virtualenv
@@ -205,8 +205,7 @@ fi
 # Builds, installs XboxOne app
 if [[ "$GPAD" == "yes" ]]; then
 	sudo lpf approve xone-firmware
-	sudo lpf build xone-firmware
-	sudo lpf install xone-firmware
+	sudo lpf build xone-firmware && sudo lpf install xone-firmware
 fi
 # For Bash Aliases
 touch "${HOME}/.bashrc"
